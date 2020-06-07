@@ -46,7 +46,7 @@ ex:-
  docker push anil7411/project:v1.0
 
 #download image from dockerhub
-docker pul <imageName>:<tag> 
+docker pull <imageName>:<tag> 
 ex:-
  docker pull anil7411/project:v1.0
   
