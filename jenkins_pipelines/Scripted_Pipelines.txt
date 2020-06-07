@@ -1,0 +1,322 @@
+Ex:1
+ node { // node/agent
+  stage('Stage 1') {
+    echo 'Hello World' // echo Hello World
+  }
+}
+
+===============
+Ex:2
+
+node {
+
+	stage('SCM'){
+	echo "This is SCM Checkout Stage ....."
+	}
+    stage('Build'){
+	echo "This is Build Stage ....."
+	}
+	stage('Test'){
+	echo "This is Test Stage ....."
+	}
+	stage('Analysis'){
+	echo "This is Analysis Stage ....."
+	}
+	stage('Deploy'){
+	echo "This is Deploy Stage ....."
+	}
+}
+================
+Ex:3
+
+node {
+
+	stage('Adding Numbers ..'){
+	add(10,20)
+	}
+    
+}
+def add(x,y){
+    z=x+y
+    echo "Sum of ${x} and ${y} is ${z}"
+}
+
+
+================
+Ex:4
+
+node {
+  stage('SampleTryCatch') {
+    try {
+      sh 'exit 1'
+    }
+    catch (exc) {
+      echo 'Something did not work and got some exceptions'
+      
+    }
+  }
+}
+
+=================
+Ex:5
+
+node{
+	stage('SCM Checkout'){
+	  	git credentialsId: 'psddevops', 
+			url: 'https://github.com/psddevops/sampletest.git',
+			branch: 'master'
+	}
+	
+	stage('maven build'){
+		def mvnHome = tool name: 'maven', type: 'maven'
+		sh "${mvnHome}/bin/mvn clean package"
+	}
+}
+
+=========================
+
+node {
+   
+   stage('SCM Checkout'){
+    // Clone repo
+	git branch: 'master', 
+	credentialsId: 'psddevops', 
+	url: 'https://github.com/psddevops/sampletest.git'
+   
+   }
+	
+   stage('Mvn Package'){
+	   // Build using maven
+	   def mvn = tool (name: 'maven3', type: 'maven') + '/bin/mvn'
+	   sh "${mvn} clean package"
+   }
+   
+   stage('deploy-dev'){
+       def tomcatDevIp = '18.191.190.105'
+	   def tomcatHome = '/opt/tomcat/'
+	   def webApps = tomcatHome+'webapps/'
+	   def tomcatStart = "${tomcatHome}bin/startup.sh"
+	   def tomcatStop = "${tomcatHome}bin/shutdown.sh"
+	   
+	   sshagent (credentials: ['tomcat-dev']) {
+	      sh "scp -o StrictHostKeyChecking=no $WORKSPACE/target/*.war ubuntu@${tomcatDevIp}:${webApps}psdapp.war"
+              sh "ssh ubuntu@${tomcatDevIp} ${tomcatStop}"
+	      sh "ssh ubuntu@${tomcatDevIp} ${tomcatStart}"
+       }
+   }
+   stage('Email Notification'){
+		mail bcc: '', body: '''Hi Team, You build successfully deployed ......
+
+Thanks,
+DevOps Team''', cc: '', from: '', replyTo: '', subject: 'Build Success', to: 'psddevops1@gmail.com'
+}
+}
+
+======================
+
+node{
+ parallel firstBranch: {
+        stage('one'){
+           git url: 'http://github.com/javahometech/my-app', branch: 'master123' 
+        }
+    }, secondBranch: {
+       stage('Two'){
+           git url: 'http://github.com/javahometech/my-app', branch: 'feature-1'  
+       }
+    },
+    failFast: true
+}
+
+======================
+
+node{
+   stage('SCM Checkout'){
+     git 'https://github.com/javahometech/my-app'
+   }
+   stage('Compile-Package'){
+      // Get maven home path
+      def mvnHome =  tool name: 'maven-3', type: 'maven'   
+      sh "${mvnHome}/bin/mvn package"
+   }
+   
+   stage('SonarQube Analysis') {
+        def mvnHome =  tool name: 'maven-3', type: 'maven'
+        withSonarQubeEnv('sonar-6') { 
+          sh "${mvnHome}/bin/mvn sonar:sonar"
+        }
+    }
+   
+   stage('Email Notification'){
+      mail bcc: '', body: '''Hi Welcome to jenkins email alerts
+      Thanks
+      Hari''', cc: '', from: '', replyTo: '', subject: 'Jenkins Job', to: 'psddevops1@gmail.com'
+   }
+   stage('Slack Notification'){
+       slackSend baseUrl: 'https://hooks.slack.com/services/',
+       channel: '#jenkins-pipeline-demo',
+       color: 'good', 
+       message: 'Welcome to Jenkins, Slack!', 
+       teamDomain: 'javahomecloud',
+       tokenCredentialId: 'slack-demo'
+   }
+
+}
+
+==========================
+
+node{
+   stage('SCM Checkout'){
+     git 'https://github.com/javahometech/my-app'
+   }
+   stage('Compile-Package'){
+      // Get maven home path
+      def mvnHome =  tool name: 'maven-3', type: 'maven'   
+      sh "${mvnHome}/bin/mvn package"
+   }
+   
+   stage('SonarQube Analysis') {
+        def mvnHome =  tool name: 'maven-3', type: 'maven'
+        withSonarQubeEnv('sonar-6') { 
+          sh "${mvnHome}/bin/mvn sonar:sonar"
+        }
+    }
+    
+    stage("Quality Gate Statuc Check"){
+          timeout(time: 1, unit: 'HOURS') {
+              def qg = waitForQualityGate()
+              if (qg.status != 'OK') {
+                   slackSend baseUrl: 'https://hooks.slack.com/services/',
+                   channel: '#jenkins-pipeline-demo',
+                   color: 'danger', 
+                   message: 'SonarQube Analysis Failed', 
+                   teamDomain: 'javahomecloud',
+                   tokenCredentialId: 'slack-demo'
+                  error "Pipeline aborted due to quality gate failure: ${qg.status}"
+              }
+          }
+      }    
+   
+   stage('Email Notification'){
+      mail bcc: '', body: '''Hi Welcome to jenkins email alerts
+      Thanks
+      Hari''', cc: '', from: '', replyTo: '', subject: 'Jenkins Job', to: 'hari.kammana@gmail.com'
+   }
+   stage('Slack Notification'){
+       slackSend baseUrl: 'https://hooks.slack.com/services/',
+       channel: '#jenkins-pipeline-demo',
+       color: 'good', 
+       message: 'Welcome to Jenkins, Slack!', 
+       teamDomain: 'javahomecloud',
+       tokenCredentialId: 'slack-demo'
+   }
+
+}
+
+
+===========================
+
+try{
+	node{
+    stage('Git Checkout'){
+		git credentialsId: 'github', 
+		    url: 'https://github.com/javahometech/my-app',
+			branch: "${params.gitBranch}"
+	}
+	
+	stage('Maven Build'){
+		sh 'mvn clean package'
+	}
+	stage('Deploy to Dev'){
+		sh 'mv target/*.war target/myweb.war'
+		sshagent(['tomcat-dev']) {
+			sh 'ssh ec2-user@172.31.17.196 rm -rf /opt/tomcat8/webapps/myweb*'
+		    sh 'scp target/myweb.war ec2-user@172.31.17.196:/opt/tomcat8/webapps/'
+		    sh 'ssh ec2-user@172.31.17.196 sudo service tomcat restart'
+		}
+	    slackSend channel: '#devops-2',
+				  color: 'good',
+				  message: "Job -  ${env.JOB_NAME}, Completed successfully Build URL is ${env.BUILD_URL}"
+
+
+	}
+}
+
+}catch(error){
+  slackSend channel: '#devops-2',
+				  color: 'danger',
+				  message: "Job -  ${env.JOB_NAME}, Failed, Build URL is ${env.BUILD_URL}"
+   error 'Something wrong'
+}
+
+
+============================
+node {
+//   Accessing data from currentBuild objects
+
+  echo "Current Build Absolute URL ${currentBuild.absoluteUrl}"
+  echo "Current Build Result ${currentBuild.currentResult}"
+  
+//   Accessing data from env object
+
+  echo "Jenkins Home ${env.JENKINS_HOME}"
+  echo "Jenkins URL ${env.JENKINS_URL}"
+  echo "JOB Name ${env.JOB_NAME}"
+  
+}
+
+=============================
+
+properties([pipelineTriggers([pollSCM('')])])
+node{
+    stage('SCM Checkout'){
+        git url:'https://github.com/javahometech/my-app', branch: 'master'
+    }
+    stage('Welcome'){
+        print "Build Got triggered, tested"
+    }
+}
+
+=======================================
+
+node{
+   stage('SCM Checkout'){
+     git 'https://github.com/javahometech/my-app'
+   }
+   stage('Compile-Package'){
+      // Get maven home path
+      def mvnHome =  tool name: 'maven-3', type: 'maven'   
+      sh "${mvnHome}/bin/mvn package"
+   }
+   
+   stage('SonarQube Analysis') {
+        def mvnHome =  tool name: 'maven-3', type: 'maven'
+        withSonarQubeEnv('sonar-6') { 
+          sh "${mvnHome}/bin/mvn sonar:sonar"
+        }
+    }
+   
+   stage('Email Notification'){
+      mail bcc: '', body: '''Hi Welcome to jenkins email alerts
+      Thanks
+      Hari''', cc: '', from: '', replyTo: '', subject: 'Jenkins Job', to: 'hari.kammana@gmail.com'
+   }
+   stage('Slack Notification'){
+       sendSlackNotifications(message='Welcome to Jenkins, Slack!',msgColor='good')
+   }
+   
+   def sendSlackNotifications(String message, String msgColor){
+       slackSend baseUrl: 'https://hooks.slack.com/services/',
+       channel: '#jenkins-pipeline-demo',
+       color: msgColor, 
+       message: message, 
+       teamDomain: 'javahomecloud',
+       tokenCredentialId: 'slack-demo'
+   }
+
+}
+
+=======================================
+
+
+
+

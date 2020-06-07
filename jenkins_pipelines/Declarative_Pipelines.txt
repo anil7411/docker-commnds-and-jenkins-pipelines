@@ -1,0 +1,743 @@
+environment
+============
+
+pipeline {
+agent any
+environment {
+OUTPUT_PATH = './outputs/'
+}
+stages {
+stage ('build') {
+...
+}
+...
+}
+}
+
+
+pipeline {
+agent any
+stages {
+stage ('build') {
+environment {
+OUTPUT_PATH = './outputs/'
+}
+...
+}
+...
+}
+}
+
+=======================
+Input
+======
+
+pipeline {
+agent any
+stages {
+stage ('build') {
+input{
+message "Press Ok to continue"
+submitter "user1,user2"
+parameters {
+string(name:'username', defaultValue: 'user', description: 'Username of the user pressing Ok')
+}
+}
+steps { 
+echo "User: ${username} said Ok."
+}
+}
+}
+}
+
+============================
+Options
+=======
+
+pipeline {
+agent any
+options {
+retry(3)
+}
+stages {
+...
+}
+}
+
+=============================
+parallel
+=========
+
+
+stage('run-parallel-branches') {
+ steps {
+  parallel(
+   a: {
+    echo "Tests on Linux"
+   },
+   b: {
+    echo "Tests on Windows"
+   }
+  )
+ }
+}
+
+============================
+parameters
+==========
+
+pipeline {
+ agent any
+ parameters {
+  string(name: 'user', defaultValue: 'John', description: 'A user that triggers the pipeline')
+ }
+ stages {
+  stage('Trigger pipeline') {
+   steps {
+    echo "Pipeline triggered by ${params.USER}"
+   }
+  }
+ }
+}
+
+=================
+post
+====
+
+pipeline {
+ agent any
+ stages {
+  stage('Some steps') {
+   steps {
+    ...
+   }
+  }
+ }
+ post {
+  always {
+   echo“ Pipeline finished”
+   bat. / performCleanUp.bat
+  }
+ }
+}
+
+--------------
+
+pipeline {
+ agent any
+ stages {
+  stage('Test_Post') {
+   steps {
+    sh 'ls'
+   }
+  }
+ }
+ post {
+  always {
+   echo 'One way or another, I have finished'
+   deleteDir() /* clean up our workspace */
+  }
+  success {
+   echo 'I succeeeded!'
+  }
+  unstable {
+   echo 'I am unstable :/'
+  }
+  failure {
+   echo 'I failed :('
+  }
+  changed {
+   echo 'Things were different before...'
+  }
+ }
+}
+
+=========================
+
+tools
+=====
+
+pipeline {
+ agent any
+ tools {
+  maven 'apache-maven-3.0.1'
+ }
+ stages {
+  ...
+ }
+}
+
+===================
+
+triggers
+========
+
+pipeline {
+ agent any
+ triggers {
+  //Execute weekdays every four hours starting at minute 0
+  cron('0 */4 * * 1-5')
+ }
+ stages {
+  ...
+ }
+}
+pipeline {
+ agent any
+ triggers {
+  //Query repository weekdays every four hours starting at minute 0
+  pollSCM('0 */4 * * 1-5')
+ }
+ stages {
+  ...
+ }
+}
+pipeline {
+ agent any
+ triggers {
+  //Execute when either job1 or job2 are successful
+  upstream(upstreamProjects: 'job1, job2', threshold: hudson.model.Result.SUCCESS)
+ }
+ stages {
+  ...
+ }
+}
+
+=========================
+
+when
+=====
+
+pipeline {
+ agent any
+ stages {
+  stage('Deploy stage') {
+   when {
+    branch 'master'
+   }
+   steps {
+    echo 'Deploy master to stage'
+     ...
+   }
+  }
+ }
+}
+
+
+===================================
+
+GIT+MAVEN+POST(MAIL)
+====================
+
+pipeline {
+    agent any
+    environment{
+        PATH="/opt/maven/bin:$PATH"
+    }
+    stages {
+        stage('GIT Checkout'){
+            steps{
+                git changelog: false, credentialsId: 'git_cred', poll: false, url: 'https://github.com/psddevops/sampletest.git'
+            }}
+        stage('Maven Build'){
+            steps{
+				
+                sh label: '', script: 'mvn clean package'
+				
+            }
+        post{
+        success{
+            mail body: """Hi Team, The app is successfully deployed
+            ${BUILD_URL}
+
+Thanks,
+PSD DevOps.
+""", subject: "${JOB_NAME} - Successfully Deployed", to: 'psddevops1@gmail.com'
+        }
+
+        failure{
+            mail body: """Hi Team, The app deployment failed
+            ${BUILD_URL}
+
+Thanks,
+PSD DevOps.
+""", subject: "${JOB_NAME} - Deployment failed", to: 'psddevops1@gmail.com'
+        }
+    }
+}
+}
+}
+
+======================================
+
+GIT+MAVEN+POST(Junit)
+=====================
+
+
+pipeline {
+    agent any
+    environment{
+        PATH="/opt/maven/bin:$PATH"
+    }
+    stages {
+        stage('GIT Checkout'){
+            steps{
+                git changelog: false, credentialsId: 'git_cred', poll: false, url: 'https://github.com/psddevops/sampletest.git'
+            }}
+        stage('Maven Build'){
+            steps{
+				
+                sh label: '', script: 'mvn clean package'
+				
+            }
+        post { 
+        success{ 
+            junit testResults: '**/target/surefire-reports/*.xml', allowEmptyResults: false
+          
+        }
+    }
+}
+}
+}
+
+=========================================
+
+GIT+MAVEN+Tomcat+POST(Junit/Mail)
+=================================
+
+pipeline {
+    agent any
+    environment{
+        PATH="/opt/maven/bin:$PATH"
+    }
+    stages {
+        stage('GIT Checkout'){
+            steps{
+                git changelog: false, credentialsId: 'git_cred', poll: false, url: 'https://github.com/psddevops/sampletest.git'
+            }}
+        stage('Maven Build'){
+            steps{
+				sh label: '', script: 'mvn clean package'
+				}
+			post { 
+        success{ 
+            junit testResults: '**/target/surefire-reports/*.xml', allowEmptyResults: false
+          
+        }
+    }
+        }
+        stage("Deploy"){
+			steps{
+	            sh label: '', script: 'scp -o StrictHostKeyChecking=no -r $WORKSPACE/target/*.war ubuntu@ec2-3-15-232-51.us-east-2.compute.amazonaws.com:/opt/tomcat/webapps'
+			}
+		post{ 
+        success{ 
+          mail to: 'psddevops1@gmail.com',
+          subject: "Status of pipeline: ${currentBuild.fullDisplayName}",
+          body: "${env.BUILD_URL} has result ${currentBuild.result}"
+          
+        }
+    }
+}
+}
+
+========================================================
+
+Parameter Example
+=================
+pipeline{
+    agent any
+    parameters{
+     string(name: 'TARGET_BRANCH', defaultValue: "Master", description: 'Enter default value')
+	 choice(name: 'Environment', choices: ['Dev', 'UAT', 'PROD'], description: 'Please select the Environment')
+	 booleanParam(name: 'Service', defaultValue: false, description: 'Please select the service')
+    }
+        stages
+        {
+            stage("Parameters")
+            {
+                
+                steps{
+
+                    sh label: '', script: 'echo "This is parameter stage "'
+                    echo "${params.TARGET_BRANCH}"
+					echo "${params.Environment}"
+					echo "${params.Service}"
+                
+                
+				}
+				}
+            }
+   }
+
+
+========================================================
+
+When with Tomcat and Maven
+===========================
+pipeline {
+    agent any
+    environment{
+        PATH="/opt/maven/bin:$PATH"
+    }
+    parameters{
+        string(name: 'TARGET_BRANCH', defaultValue: "master", description: 'Enter default value')
+        booleanParam(name: 'Service', defaultValue: false, description: 'Please select the service')
+    }
+    stages {
+        stage('GIT Checkout'){
+            steps{
+                git branch: '$TARGET_BRANCH', credentialsId: 'git_cred', url: 'https://github.com/psddevops/sampletest.git'
+            }}
+        stage('Maven Build'){
+            steps{
+				sh label: '', script: 'mvn clean package'
+				}
+			post { 
+        success{ 
+            junit testResults: '**/target/surefire-reports/*.xml', allowEmptyResults: false
+          
+        }
+    }
+        }
+        stage("Deploy"){
+		when{
+		expression {params.TARGET_BRANCH == "master" && params.Service == true }
+		}
+			steps{
+	            sh label: '', script: 'scp -o StrictHostKeyChecking=no -r $WORKSPACE/target/*.war ubuntu@3.12.129.238:/opt/tomcat/webapps'
+			}
+		post{ 
+        failure{ 
+          mail to: 'psddevops1@gmail.com',
+          subject: "Status of pipeline: ${currentBuild.fullDisplayName}",
+          body: "${env.BUILD_URL} has result ${currentBuild.result}"
+          
+        }
+    }
+}
+}
+}
+
+=====================================================
+
+GIT+Maven+Post(Slack)
+=====================
+
+pipeline {
+    agent any
+    environment{
+        PATH="/opt/maven/bin:$PATH"
+    }
+    stages {
+        stage('GIT Checkout'){
+            steps{
+                git changelog: false, credentialsId: 'git_cred', poll: false, url: 'https://github.com/psddevops/sampletest.git'
+            }}
+        stage('Maven Build'){
+            steps{
+				
+                sh label: '', script: 'mvn clean package'
+				
+            }
+        post{
+        success{
+           slackSend color: "#439FE0", message: "Job Success: ${JOB_NAME} and ${BUILD_URL}"
+        }
+		failure{
+           slackSend color: "#439FE0", message: "Job failure: ${JOB_NAME} and ${BUILD_URL}"
+        }
+
+        
+    }
+}
+}
+}
+
+=====================================================
+
+GIT+Maven+Tomcat+Post(Slack)
+============================
+
+pipeline {
+    agent any
+    environment{
+        PATH="/opt/maven/bin:$PATH"
+    }
+    stages {
+        stage('GIT Checkout'){
+            steps{
+                git changelog: false, credentialsId: 'git_cred', poll: false, url: 'https://github.com/psddevops/sampletest.git'
+            }}
+        stage('Maven Build'){
+            steps{
+				
+                sh label: '', script: 'mvn clean package'
+				
+            } }
+			
+		stage("Deploy"){
+			steps{
+	            sh label: '', script: 'scp -o StrictHostKeyChecking=no -r $WORKSPACE/target/*.war ubuntu@ec2-13-59-236-7.us-east-2.compute.amazonaws.com:/opt/tomcat/webapps'
+			}
+        post{
+        success{
+           slackSend color: "#439FE0", message: "Deployed Success: ${JOB_NAME} and ${BUILD_URL}"
+        }
+		failure{
+           slackSend color: "#439FE0", message: "Deployed failure: ${JOB_NAME} and ${BUILD_URL}"
+        }
+
+        
+    }
+
+}
+}
+}
+
+
+=====================================================
+
+CI-Declarative
+==============
+
+pipeline {
+    agent any
+    environment{
+        PATH="/opt/maven/bin:$PATH"
+    }
+	parameters{
+     string(name: 'TARGET_BRANCH', defaultValue: "master", description: 'Enter default value')
+	 choice(name: 'Environment', choices: ['Dev', 'UAT', 'PROD'], description: 'Please select the Environment')
+	 booleanParam(name: 'Service', defaultValue: false, description: 'Please select the service')
+    }
+    stages {
+        stage('GIT Checkout'){
+            steps{
+                git changelog: false, credentialsId: 'git_cred', poll: false, url: 'https://github.com/psddevops/sampletest.git'
+            }}
+        stage('Maven Build'){
+            steps{
+				
+                sh label: '', script: 'mvn clean package'
+				
+            }
+        post{
+        success{
+           slackSend color: "#439FE0", message: "CI Success: ${JOB_NAME} and ${BUILD_URL}"
+        }
+		failure{
+           slackSend color: "#439FE0", message: "CI failure: ${JOB_NAME} and ${BUILD_URL}"
+        }
+
+        
+    }
+} 
+stage('Calling_CD'){
+    steps{
+       // build(job: "cd_declarative")
+	build(job: "cd_declarative", parameters: [string(name: 'ENVIRONMENT', value: "${params.ENVIRONMENT}"),
+    string(name: 'TARGET_BRANCH', value: "${params.TARGET_BRANCH}"),
+    string(name: 'Service', value: "${params.Service}")
+    ])
+    }
+    
+    }
+}
+}
+
+CD-Declarative
+==============
+
+pipeline {
+    agent any
+    environment{
+        PATH="/opt/maven/bin:$PATH"
+    }
+	parameters{
+     string(name: 'TARGET_BRANCH', defaultValue: "master", description: 'Enter default value')
+	 choice(name: 'Environment', choices: ['Dev', 'UAT', 'PROD'], description: 'Please select the Environment')
+	 booleanParam(name: 'Service', defaultValue: false, description: 'Please select the service')
+    }
+    stages {
+			
+		stage("Deploy"){
+		when{
+		expression {params.TARGET_BRANCH == "master" && params.Service == true }
+		}
+			steps{
+	            sh label: '', script: 'scp -o StrictHostKeyChecking=no -r /var/lib/jenkins/workspace/ci_declarative/target/psdapp.war ubuntu@ec2-13-59-236-7.us-east-2.compute.amazonaws.com:/opt/tomcat/webapps'
+			}
+        post{
+        success{
+           slackSend color: "#439FE0", message: "CD-Deployed Success: ${JOB_NAME} and ${BUILD_URL}"
+        }
+		failure{
+           slackSend color: "#439FE0", message: "CD-Deployed failure: ${JOB_NAME} and ${BUILD_URL}"
+        }
+
+        
+    }
+
+}
+}
+}
+
+Note
+====
+Passing Build parameter automatically
+
+*/2 * * * * % ENVIRONMENT=Dev;TARGET_BRANCH=master;Service=true
+
+
+============================================================
+
+SonarQube+Quality Gate
+======================
+
+pipeline {
+    agent any
+    environment{
+        PATH="/opt/maven/bin:$PATH"
+    }
+    stages {
+        stage('GIT Checkout'){
+            steps{
+                git changelog: false, credentialsId: 'git_cred', poll: false, url: 'https://github.com/psddevops/sampletest.git'
+            }}
+        stage('Maven Build'){
+            steps{
+				
+                sh label: '', script: 'mvn clean package'
+				
+            }
+            
+        }
+    stage('SonarQube') {
+   steps {
+    script {
+     
+      withSonarQubeEnv() {
+       sh "/opt/sonar-scanner/bin/sonar-scanner -Dsonar.language=java -Dsonar.projectName=citi -Dsonar.sourceEncoding=UTF-8 -Dsonar.projectKey=citi -Dsonar.projectVersion=${BUILD_TAG} -Dsonar.java.binaries=${WORKSPACE}/target/classes -Dsonar.sources=${WORKSPACE} -Dsonar.projectBaseDir=${WORKSPACE} -Dsonar.coverage.jacoco.xmlReportPaths=${WORKSPACE}/target/site/jacoco/jacoco.xml -Dsonar.junit.reportPaths=${WORKSPACE}/target/surefire-reports/*.xml"
+      }
+     }
+    }
+	}
+	stage("Sonar_Quality_Gate"){
+	steps{
+	script{
+	timeout(time: 5, unit: 'MINUTES') {
+	def qg = waitForQualityGate()
+	catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE'){
+	if (qg.status != 'OK') {
+	error "Stage aborted due to quality gate failure: ${qg.status}"
+	
+	}
+	}
+	}
+	}
+	}
+	post {
+    success {
+		  sh label: '', script: 'echo " ${STAGE_NAME} is Passed"'
+    }
+	failure {
+		  sh label: '', script: 'echo " ${STAGE_NAME} is Failed"'
+		  mail body: """Hi Team, The app deployment failed
+            ${BUILD_URL}
+
+Thanks,
+PSD DevOps.
+""", subject: "${JOB_NAME} - Quality Gate failed", to: 'psddevops1@gmail.com'
+		  
+    }
+	}
+}
+stage("Deploy"){
+			steps{
+	            sh label: '', script: 'scp -o StrictHostKeyChecking=no -r $WORKSPACE/target/*.war ubuntu@ec2-13-58-213-27.us-east-2.compute.amazonaws.com:/opt/tomcat/webapps'
+			}
+	}
+   }
+        
+    }
+    
+============================================================
+
+GIT+MAVEN+SonarQube+Quality Gate+Nexus
+======================================
+
+pipeline {
+    agent any
+    environment{
+        PATH="/opt/maven/bin:$PATH"
+    }
+    stages {
+        stage('GIT Checkout'){
+            steps{
+                git changelog: false, credentialsId: 'git_cred', poll: false, url: 'https://github.com/psddevops/sampletest.git'
+            }}
+        stage('Maven Build'){
+            steps{
+				
+                sh label: '', script: 'mvn clean package'
+				
+            }
+            
+        }
+    stage('SonarQube') {
+   steps {
+    script {
+     
+      withSonarQubeEnv() {
+       sh "/opt/sonar-scanner/bin/sonar-scanner -Dsonar.language=java -Dsonar.projectName=citi -Dsonar.sourceEncoding=UTF-8 -Dsonar.projectKey=citi -Dsonar.projectVersion=${BUILD_TAG} -Dsonar.java.binaries=${WORKSPACE}/target/classes -Dsonar.sources=${WORKSPACE} -Dsonar.projectBaseDir=${WORKSPACE} -Dsonar.coverage.jacoco.xmlReportPaths=${WORKSPACE}/target/site/jacoco/jacoco.xml -Dsonar.junit.reportPaths=${WORKSPACE}/target/surefire-reports/*.xml"
+      }
+     }
+    }
+	}
+	stage("Sonar_Quality_Gate"){
+	steps{
+	script{
+	timeout(time: 5, unit: 'MINUTES') {
+	def qg = waitForQualityGate()
+	catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE'){
+	if (qg.status != 'OK') {
+	error "Stage aborted due to quality gate failure: ${qg.status}"
+	
+	}
+	}
+	}
+	}
+	}
+	post {
+    success {
+		  sh label: '', script: 'echo " ${STAGE_NAME} is Passed"'
+    }
+	failure {
+		  sh label: '', script: 'echo " ${STAGE_NAME} is Failed"'
+		  mail body: """Hi Team, The app deployment failed
+            ${BUILD_URL}
+
+Thanks,
+PSD DevOps.
+""", subject: "${JOB_NAME} - Quality Gate failed", to: 'psddevops1@gmail.com'
+		  
+    }
+	}
+}
+stage('Publish') {
+    steps{
+   //nexusPublisher nexusInstanceId: 'nexus3', nexusRepositoryId: 'citi-releases', packages: [[$class: 'MavenPackage', mavenAssetList: [[classifier: '', extension: '', filePath: '$WORKSPACE/target/psdapp.war']], mavenCoordinate: [artifactId: 'citi', groupId: 'com.citi', packaging: 'war', version: '1.0']]]
+   nexusPublisher nexusInstanceId: 'nexus3', nexusRepositoryId: 'citi-releases', packages: [[$class: 'MavenPackage', mavenAssetList: [[classifier: '', extension: '', filePath: '/var/lib/jenkins/workspace/sonar_test_declarative/target/psdapp.war']], mavenCoordinate: [artifactId: 'psdapp', groupId: 'com.citi', packaging: 'war', version: '$BUILD_NUMBER']]]
+   } }
+stage("Deploy"){
+			steps{
+	            sh label: '', script: 'scp -o StrictHostKeyChecking=no -r $WORKSPACE/target/*.war ubuntu@ec2-13-58-213-27.us-east-2.compute.amazonaws.com:/opt/tomcat/webapps'
+			}
+	}
+   }
+        
+    }
+    
+
+

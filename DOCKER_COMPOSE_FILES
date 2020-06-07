@@ -1,0 +1,290 @@
+version: "3.8"
+services:
+ web:
+   image: nginx:latest
+   ports:
+    - "80:80"
+ db:
+   image: mysql:latest
+   environment:
+   - MYSQL_ROOT_PASSWORD=root
+	
+note: docker-compose up 
+          (or)
+      docker-compose up -d
+=================================================================================
+version: "3.8"
+services:
+ web:
+   image: nginx:latest
+   ports:
+    - "80:80"
+   container_name: nginx_con
+   networks:
+    - mynet1
+ db:
+   image: mysql:latest
+   environment:
+    - MYSQL_ROOT_PASSWORD=root
+   container_name: db_con
+   networks:
+    - mynet1
+
+networks:
+  mynet1:
+  
+  
+Note: run command "docker compose up -d" (check by which name network will be created)
+      run command "docker compose -p myapp up -d" (check by which name network will be created)
+========================================================================================
+version: "3.8"
+services:
+ web:
+   image: nginx:latest
+   ports:
+    - "80:80"
+   container_name: nginx_con
+   networks:
+    - mynet1
+ db:
+   image: mysql:latest
+   environment:
+    - MYSQL_ROOT_PASSWORD=root
+   container_name: db_con
+   networks:
+    - mynet1
+
+networks:
+  mynet1:
+   external: true
+   
+Note1: In this case it uses external network "mynet1" which is already created by user instead of creating new network by docker-compose
+if it wont availble then docker-compose gives an error message like "ERROR: Network mynet1 declared as external, 
+but could not be found. Please create the network manually using `docker network create mynet1` and try again."
+
+=========================================================================================================================================
+version: "3.8"
+services:
+ web:
+   image: nginx:latest
+   ports:
+    - "80:80"
+   container_name: nginx_con
+   networks:
+    - mynet1
+ db:
+   image: mysql:latest
+   environment:
+    - MYSQL_ROOT_PASSWORD=root
+   container_name: db_con
+   networks:
+    - mynet1
+
+networks:
+ mynet1:
+  external:
+   name: mybridge1
+
+Note: here, we are specify the name of the network separately from the name used to refer to it within the Compose file
+======================================================================================================================
+version: "3.8"
+services:
+ web:
+   image: nginx:latest
+   ports:
+    - "80:80"
+   container_name: nginx_con
+   networks:
+    - mynet1
+ db:
+   image: mysql:latest
+   environment:
+    - MYSQL_ROOT_PASSWORD=root
+   container_name: db_con
+   networks:
+    - mynet1
+
+networks:
+ mynet1:
+  driver: overlay 
+  
+Note: In this docker-compose, create overlay network for the containers. 
+but we have to specify network driver type in top-level networks.driver
+===============================================================================
+version: "3.8"
+services:
+ web:
+   image: nginx:latest
+   ports:
+    - "80:80"
+   container_name: nginx_con
+   volumes:
+    - "vol_nginx:/usr/share/nginx/html"
+ db:
+   image: mysql:latest
+   environment:
+    - MYSQL_ROOT_PASSWORD=root
+   container_name: db_con
+   volumes:
+    - "vol_db:/var/lib/mysql"
+volumes:
+  vol_nginx:
+  vol_db:
+===============================================================================
+version: "3.8"
+services:
+ web:
+   image: nginx:latest
+   ports:
+    - "80:80"
+   container_name: nginx_con
+   volumes:
+    - "vol_web:/usr/share/nginx/html"
+ db:
+   image: mysql:latest
+   environment:
+    - MYSQL_ROOT_PASSWORD=root
+   container_name: db_con
+   volumes:
+    - "vol_db:/var/lib/mysql"
+volumes:
+  vol_web:
+    external: true
+  vol_db:
+    external: true
+	
+Note1: In this case it uses external volume "vol_web" (which is already created by user) instead of creating new volume by docker-compose
+if it wont availble then docker-compose gives an error message like "ERROR: volume "vol_web" declared as external, 
+but could not be found. Please create the network manually using `docker volume create vol_web` and try again."
+
+==========================================================================================================================================
+version: "3.8"
+services:
+ web:
+   image: nginx:latest
+   ports:
+    - "80:80"
+   container_name: nginx_con
+   volumes:
+    - "vol_web:/usr/share/nginx/html"
+ db:
+   image: mysql:latest
+   environment:
+    - MYSQL_ROOT_PASSWORD=root
+   container_name: db_con
+   volumes:
+    - "vol_db:/var/lib/mysql"
+volumes:
+  vol_web:
+    external: true
+  vol_db:
+    external: 
+	 name: myvolume
+==================================================================================================================================
+version: "3.8"
+services:
+ web:
+   image: nginx:latest
+   ports:
+    - "80:80"
+    deploy:
+    mode: replicated
+    replicas: 2
+
+ db:
+   image: mysql:latest
+   environment:
+    - MYSQL_ROOT_PASSWORD=root
+   deploy:
+    mode: replicated
+    replicas: 2
+=============================================================================================================
+version: "3.8"
+services:
+ web:
+   image: nginx:latest
+   ports:
+    - "80:80"
+   deploy:
+    mode: global
+
+ db:
+   image: mysql:latest
+   deploy:
+    mode: replicated
+    replicas: 2
+=============================================================================================================
+version: "3.8"
+services:
+ web:
+   image: nginx:latest
+   ports:
+    - "80:80"
+   deploy:
+    mode: replicated
+    replicas: 2
+
+ db:
+   image: mysql:latest
+   environment:
+    - MYSQL_ROOT_PASSWORD=root
+   deploy:
+    mode: replicated
+    replicas: 3
+	max_replicas_per_node: 1
+=============================================================================================================
+version: "3.8"
+services:
+ web:
+   image: nginx:latest
+   ports:
+    - "80:80"
+   deploy:
+    mode: global
+
+ db:
+   image: mysql:latest
+   environment:
+    - MYSQL_ROOT_PASSWORD=root
+   deploy:
+    mode: replicated
+    replicas: 2
+	placement:
+	   constraints:
+		- "node.role==worker"
+		- "node.id=="id_of_node on which replicas deployed"
+=============================================================================================================
+version: "3.8"
+services:
+  web:
+    image: anil7411/nginx:2.0
+    depends_on:
+      - db
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 2
+		delay: 10s
+   db:
+   image: mysql:latest
+   environment:
+    - MYSQL_ROOT_PASSWORD=root
+   deploy:
+    mode: replicated
+    replicas: 2
+=============================================================================================================
+version: "3.8"
+services:
+  nginx:
+    image: nginx:latest
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 50M
+        reservations:
+          cpus: '0.25'
+          memory: 20M
+=============================================================================================================
+
+
