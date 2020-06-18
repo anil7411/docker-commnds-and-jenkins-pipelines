@@ -4,134 +4,159 @@ used to download base image from docker public registry
 ```sh
 docker pull image:tag  
 docker pull ubuntu:latest
-sh
+```
 list the images in local server
+ ```sh
  docker images
-
+```
 list the Running containers
+ ```sh
  docker ps
-
-#start and run the new container in detached mode (back ground)
+sh
+start and run the new container in detached mode (back ground)
+```sh
 docker run -dt IMAGE /bin/bash 
 ex:
  docker run -dt ubuntu:latest /bin/bash
-
-#Enter into container environment 
+```
+Enter into container environment 
+```sh
 docker exec -it CONTAINER /bin/bash
-
-#Exit from the container environment
- ctrl + p + q   
+sh
+Exit from the container environment
+```sh
+ctrl + p + q   
     (or)
  exit
-
-#create a customized images from container
+```
+create a customized images from container
+```sh
 docker commit CONTAINER nameimage
 ex:-
  docker commit bbe1613d50e7  sample:latest
-
-#tag image to dockerhub repo image
+```
+tag image to dockerhub repo image
+```sh
 docker tag <image_in_local>:<tag> <imagehub>:<tag>
 ex:-
  docker tag sample:latest anil7411/project:v1.0
-
-#login to dockerhub
+```
+login to dockerhub
+```sh
 docker login -u <username> -p <password>
 ex:-
  docker login -u anil7411 -p <password>
-
-#push image to dockerhub
+```
+push image to dockerhub
+```sh
 docker push <imageName>:<tag>
 ex:-
  docker push anil7411/project:v1.0
-
-#download image from dockerhub
+```
+download image from dockerhub
+```sh
 docker pull <imageName>:<tag> 
 ex:-
  docker pull anil7411/project:v1.0
-  
-#create new container from image but it wont start the container
+```
+create new container from image but it wont start the container
+```sh
 docker create --name <name> <imageName>:<tag>
 ex:-
  $ docker create --name data_container ubuntu /bin/bash
-
-#start the stopped container 
+```
+start the stopped container 
+```sh
 docker start <CONTAINER> 
 ex:
  $ docker start data_container
-
-#create new container from a image and start that creates container
+```
+create new container from a image and start that creates container
+```sh
 docker run -dt --name <name> <imageName>:<tag> /bin/bash
 ex:
  $ docker run -dt --name ramakrishna 4e5021d210f6 bash
-
-#create and start new container in interactive mode
+```
+create and start new container in interactive mode
+```sh
 docker run -it --name <name> <imageName>:<tag> /bin/bash
 ex:-
  $ docker run -dt --name ramakrishna 4e5021d210f6 bash
-
-#Access/enter into running container’s environment
+```
+Enter into running container’s environment
+```sh
 docker exec -it <CONTAINER> /bin/bash
 ex:-
  $ docker exec -it 2b63f0da4b9e bash
-
-#Run an command in running container from host machine
+```
+Run an command in running container from host machine
+```sh
 docker exec <CONTAINER> <command>
 ex:-
  docker exec sample-cont ls (list the files and folders of container)
  docker exec  sample-cont mkdir project (create the project directory inside container)
-
-#copy the files/folder from host machine to container and vice versa
+```
+copy the files/folder from host machine to container and vice versa
+```sh
 docker cp <file/folderinhost> <CONTAINER>:/path/to/copy 
 ex:-
  docker cp file.txt 73c774879228:/opt (copy to container from host)
  docker cp 73c774879228:/opt/container_folder /root(copy  to host from container)
-
-# Export a container's filesystem as a tar archive
+```
+Export a container's filesystem as a tar archive
+```sh
 docker export -o <name.tar> <CONTAINER>
 ex:-
  docker export -o container.tar Ramakrishna
-
-#Import the contents from a tar file to create a filesystem image
+```
+Import the contents from a tar file to create a filesystem image
+```sh
 docker import <tarfilename> <nameimage>:<tag>
 ex:-
  docker import container.tar customizedimage:latest
-
-#Detail information about container
+```
+Detail information about container
+```sh
 docker inspect <CONTAINER>
 ex:-
  docker inspect <container_name>
-
-#Save one or more images to a tar archive file
+```
+Save one or more images to a tar archive file
+```sh
 docker save -o <name.tar> <image1>:<tag> <image2>:<tag> ……….
 ex:-
  docker save -o images.tar 8326be82abe6 ed21b7a8aee9 4e5021
-
-#Load an image from a tar archive
+```
+Load an image from a tar archive
+```sh
 docker load -i <tarfile>
 ex:-
  docker load -i images.tar
-
-#see the logs of the container
+```
+see the logs of the container
+```sh
 docker logs <CONTAINER>
 ex:-
  docker logs <container_name>
-
-
-#List port mappings or a specific mapping for the container
+```
+List port mappings or a specific mapping for the container
+```sh
 docker port <CONTAINER>
 ex:-
  docker port data_contianer
-
-#change name of conainer
+```
+change name of conainer
+```sh
 docker rename <CONTAINER> <NewName>
 ex:-
  docker rename nifty_engelbart Gowtham
-
-#restart a container
+```
+restart a container
+```sh
 docker restart <CONTAINER> 
 ex:-
  docker restart Gowtham
-
+```
 #stop container
  docker stop <CONTAINER>
 ex:-
