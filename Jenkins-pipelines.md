@@ -1,4 +1,4 @@
-# Syntax
+# Jenkins Pipeline
 ```sh
 pipeline {
  agent any
@@ -25,24 +25,28 @@ pipeline {
 }	
 ```
 
-agent section:-
---------------
+# agent section
+Example-1
+```sh
 pipeline {
  agent any
  ;;
  ;;
  ;;
----------------------------------------------------
-
+ ```
+Example-2
+```sh
 pipeline {
  agent {label "labelname") 
  ;;
 ;;
 ;;
 } 
----------------------------------------------------
+```
+Example-3
+```sh
 Stage-level Agent Section:-
---------------------------
+
 pileline {
  agent none
  stages {
@@ -60,13 +64,11 @@ pileline {
   }
  }
 }
-====================================================================================================================================
-post section:-
--------------
-The post section defines one or more additional steps that are run upon the completion of a Pipeline’s or stage’s run
+```
+# post section
 
-post section allowed in the top-level pipeline block and each stage block.
-
+The post section defines one or more additional steps that are run upon the completion of a Pipeline’s or stage’s run. post section allowed in the top-level pipeline block and each stage block.
+```sh
 pileline {
   agent none
   stages {
@@ -110,14 +112,13 @@ pileline {
    }
   }
 }
-======================================================================================================================================================================
-options directive:-
------------------
+```
+# options directive
 The options directive allows configuring Pipeline-specific options from within the Pipeline itself.
 Allowed: Only once, inside the pipeline block.
 
 Available Options:-
-
+-------------------
 buildDiscarder:-
 --------------
 Persist artifacts and console output for the specific number of recent Pipeline runs. 
@@ -142,8 +143,8 @@ timeout:-
 -------
 Set a timeout period for the Pipeline run, after which Jenkins should abort the Pipeline. For example: options { timeout(time: 1, unit: 'HOURS') }
 
-examples:-
-
+Example-1:-
+```sh
 pipeline {
     agent any
     options {
@@ -157,9 +158,9 @@ pipeline {
         }
     }
 }
-
-ex2:-
------
+```
+Example-2:-
+```sh
 pipeline {
     agent any
     stages {
@@ -173,33 +174,34 @@ pipeline {
         }
     }
 }
+```
+# parameters directives:-
 
-======================================================================================================================================================================
-
-parameters directives:-
-----------------------
 The parameters directive provides a list of parameters that a user should provide when triggering the Pipeline
 
 Available Parameters:-
 --------------------
 string:-
+-------
 A parameter of a string type, for example: parameters { string(name: 'DEPLOY_ENV', defaultValue: 'staging', description: '') }
 
 text:-
+-----
 A text parameter, which can contain multiple lines, for example: parameters { text(name: 'DEPLOY_TEXT', defaultValue: 'One\nTwo\nThree\n', description: '') }
 
 booleanParam:-
+------------
 A boolean parameter, for example: parameters { booleanParam(name: 'DEBUG_BUILD', defaultValue: true, description: '') }
 
 choice:-
+-------
 A choice parameter, for example: parameters { choice(name: 'CHOICES', choices: ['one', 'two', 'three'], description: '') }
 
 password:-
+---------
 A password parameter, for example: parameters { password(name: 'PASSWORD', defaultValue: 'SECRET', description: 'A secret password') }
 
-examples:-
-----------
-
+```sh
 pipeline {
     agent any
     parameters {
@@ -229,12 +231,9 @@ pipeline {
         }
     }
 }
-========================================================================================================================================================
-triggers directive:-
--------------------
-The triggers directive defines the automated ways in which the Pipeline should be re-triggered
-
-The triggers currently available are cron, pollSCM and upstream
+```
+# triggers directive:-
+The triggers directive defines the automated ways in which the Pipeline should be re-triggered. The triggers currently available are cron, pollSCM and upstream
 
 cron:-
 -----
@@ -250,8 +249,7 @@ upstream:-
 Accepts a comma-separated string of jobs and a threshold. When any job in the string finishes with the minimum threshold, the Pipeline will be re-triggered. 
 For example: triggers { upstream(upstreamProjects: 'job1,job2', threshold: hudson.model.Result.SUCCESS) }
 
-example:-
--------
+```sh
 pipeline {
     agent any
     triggers {
@@ -269,16 +267,12 @@ pipeline {
         }
     }
 }
-
-==========================================================================================================================================================================
-
-tools directive:-
+```
+# tools directive:-
 ----------------
 A section defining tools to auto-install and put on the PATH. This is ignored if agent none is specified
 Allowed: Inside the pipeline block or a stage block.
-
-examples:-
----------
+```sh
 pipeline {
     agent any
     tools {
@@ -294,12 +288,11 @@ pipeline {
 }
 
 note:- The tool name must be pre-configured in Jenkins under Manage Jenkins → Global Tool Configuration
+```
+#input directive:-
 
-===============================================================================================================================================================================
-
-input directive:-
-----------------
 The input directive on a stage allows you to prompt for input, using the input step. The stage will pause after any options have been applied, and before entering the agent block for that stage or evaluating the when condition of the stage. If the input is approved, the stage will then continue. 
+
 Any parameters provided as part of the input submission will be available in the environment for the rest of the stage
 
 Configuration options:-
@@ -328,9 +321,6 @@ parameters:-
 ----------
 An optional list of parameters to prompt the submitter to provide. See parameters for more information.
 
-examples:-
----------
-
 pipeline {
     agent any
     stages {
@@ -349,8 +339,8 @@ pipeline {
         }
     }
 }
-========================================================================================================================================================================================================================
-========================================================================================================================================================================================================================
+
+# Jenkins pipeline scripts Example
 
 Git+Maven+Nexus+Tomcat_Deploy Example:-
 =======================================
