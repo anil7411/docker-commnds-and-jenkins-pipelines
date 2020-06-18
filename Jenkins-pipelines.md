@@ -344,7 +344,7 @@ pipeline {
 
 Git+Maven+Nexus+Tomcat_Deploy Example:-
 =======================================
-
+```sh
 pipeline {
     agent any
     tools {
@@ -380,3 +380,4 @@ pipeline {
         }
     }
 }
+```
