@@ -289,7 +289,7 @@ pipeline {
 
 note:- The tool name must be pre-configured in Jenkins under Manage Jenkins → Global Tool Configuration
 ```
-#input directive:-
+# input directive:-
 
 The input directive on a stage allows you to prompt for input, using the input step. The stage will pause after any options have been applied, and before entering the agent block for that stage or evaluating the when condition of the stage. If the input is approved, the stage will then continue. 
 
