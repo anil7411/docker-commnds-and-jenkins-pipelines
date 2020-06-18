@@ -321,6 +321,7 @@ parameters:-
 ----------
 An optional list of parameters to prompt the submitter to provide. See parameters for more information.
 
+```sh
 pipeline {
     agent any
     stages {
@@ -339,7 +340,7 @@ pipeline {
         }
     }
 }
-
+```
 # Jenkins pipeline scripts Example
 
 Git+Maven+Nexus+Tomcat_Deploy Example:-
