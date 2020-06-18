@@ -12,7 +12,7 @@ RUN apt install openjdk-8-jdk -y
 ```sh
 command to create a image from docker file
 $ docker build -t sample:image . 
-```sh
+```
 
 2. CMD INSTRUCTION:
 ```sh
