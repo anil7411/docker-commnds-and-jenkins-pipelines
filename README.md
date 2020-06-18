@@ -4,27 +4,20 @@
 The RUN instruction will execute any commands in a new layer on top of the current image and commit the results. In simple way, RUN instruction is used to execute the commands inside the container.
   
 ```sh
-#Create a file with Dockerfile add below commands 
 FROM ubuntu:latest
 RUN apt update -y 
 RUN apt install wget -y 
 RUN apt install openjdk-8-jdk -y
 ```
----------------------------------------------------------------------------------------------------------
-```sh
-command to create a image from docker file
-$ docker build -t sample:image . 
-```
-
 # 2. CMD INSTRUCTION:
 CMD instruction allows you to set a default command, which will be executed only when you run container without specifying a command. If Docker container runs with a command, the default command will be ignored. If Dockerfile has more than one CMD instruction, all but last CMD instructions are ignored.
 
 ```sh
-ex1:-
+Example-1
 FROM ubuntu:latest
 CMD echo "hello world"
-=========================================================================================================
-ex2:-
+
+Example-2
 FROM ubuntu:latest
 RUN apt update -y && apt install wget -y &&  apt install openjdk-8-jdk -y
 RUN wget http://apachemirror.wuchna.com/tomcat/tomcat-8/v8.5.54/bin/apache-tomcat-8.5.54.tar.gz
@@ -50,10 +43,9 @@ CREATE A DOCKERFILE WITH A NAME "dockerfile2"
 FROM  ubuntu:latest
 COPY file.txt /
 ```
-----------------------------------------------------------------------------------------------------
+
 ```sh
 TO RUN BUILD A IMAGE FROM above named DOCKEFILE "dockerfile2" use below command
-
 $docker build -t sample:latest -f  /path/to/dockerfile2 . (dont forgot to add '.' at end)
 ```
 
@@ -61,15 +53,15 @@ $docker build -t sample:latest -f  /path/to/dockerfile2 . (dont forgot to add '.
 The ADD instruction allows you to copies the files/directories from docker host or from URL to container files system.
 
 ```sh
-ex1:
+Example-1
 FROM ubuntu
 ADD apache-tomcat-8.5.54.tar.gz /opt
 
-ex2:
+Example-2
 FROM ubuntu 
 ADD http://apachemirror.wuchna.com/tomcat/tomcat-8/v8.5.54/bin/apache-tomcat-8.5.54.tar.gz /opt
 
-ex3:
+Example-3
 FROM ubuntu
 ADD file1.txt /tmp
 ```
@@ -85,12 +77,12 @@ WORKDIR /home/ubuntu
 The ENV instruction is used to set environment variables those variables can available during the image build process and container running.
 
 ```sh
-ex1:-
+Example-1
 FROM ubuntu
 ENV NAME=JAVA
 ENV VERSION=1.8
 
-ex2:-
+Example-2
 FROM ubuntu
 RUN apt update -y && apt install openjdk-8-jdk -y
 ADD https://mirrors.estointernet.in/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz /opt
@@ -103,12 +95,13 @@ ENV PATH=$PATH:$MAVEN_HOME/bin
 ARG Instruction used to set Enviroment variables in the Dockerfile those variables can be accessed when the image is built. But running containers can’t access values of ARG variables. So, the Variables defines in ARG are also known as build-time variables. 
 
 ```sh
-ex1:-
+Example-1:-
+
 FROM ubuntu
 ARG NAME=JAVA
 ARG MAVEN_HOME=/opt/maven
 
-ex2:-
+Example-2:-
 
 FROM ubuntu
 ARG VERSION
