@@ -1,11 +1,11 @@
 # Docker all commands
 
-### used to download base image from docker public registry
+###### used to download base image from docker public registry
 ```sh
 docker pull image:tag  
 docker pull ubuntu:latest
 ```
-### list the images in local server
+###### list the images in local server
  ```sh
  docker images
 ```
