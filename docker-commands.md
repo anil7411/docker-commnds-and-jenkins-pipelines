@@ -294,8 +294,8 @@ $ docker run -it --name container1 -v /opt:/datavol ubuntu /bin/bash
 ##### Share data between containers
 ```sh
 docker run -it --volumes-from container1 --name container2 ubuntu /bin/bash
-```
-(We have used a new parameters — volumes-from <containername> that we have specified. This tells container2 to mount the volumes that container1 was mounted.)
+
+(here we are using falg "--volumes-from" this tells container2 to mount the volumes which was used by container1.)
 ```
 
 # DOCKER NETWORK COMMANDS:
