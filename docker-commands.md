@@ -77,7 +77,7 @@ docker start <CONTAINER>
 ```sh
 docker start data_container
 ```
-##### Create new container from a image and start that creates container
+##### Create new container from a image and start the container
 ```sh
 docker run -dt --name <name> <imageName>:<tag> /bin/bash
 ```
